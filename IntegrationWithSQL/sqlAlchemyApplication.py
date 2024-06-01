@@ -13,10 +13,10 @@ class User(Base):
     cpf = Column(String(11), nullable=False)
 
 
-    account = relationship("Account", back_populates='account')
+    account = relationship("Account", back_populates='user')
 
     def __repr__(self):
-        return f"User(id={self.id}, name={self.name}, fullname={self.fullname})"
+        return f"User(id={self.id}, name={self.name})"
 
 
 class Account(Base):
@@ -24,14 +24,56 @@ class Account(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     number = Column(Integer, nullable=False)
     type = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey("user.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
 
 
-    account = relationship("User", back_populates='user')
+    user = relationship("User", back_populates="account") 
 
     def __repr__(self):
-        return f"Account(id={self.id}, number={self.number}, type={self.type})"
+        return f"Acount(id={self.id}, number={self.number}, type={self.type})"
     
-print(User.__tablename__)
-print(User.__repr__)
-print(Account.__tablename__)
+# Database Connection
+
+
+engine = create_engine('sqlite://')
+
+# Creating classes as tables into database
+Base.metadata.create_all(engine)
+
+inspect_engine = inspect(engine)
+# print(inspect_engine.get_table_names())
+
+with Session(engine) as session:
+    renan = User(
+        name='renan',
+        email='renan@email.com',
+        cpf='12345678900',
+        account=[Account(number='001', type='corrente')]
+    )
+
+    joao = User(
+        name='joao',
+        email='joao@email.com',
+        cpf='12345678900',
+        account=[Account(number='002', type='corrente'),
+                 Account(number='003', type='corrente')]
+    )
+
+    # Send to Database
+
+    session.add_all([renan, joao])
+
+    session.commit()
+
+stmt = select(User).where(User.name.in_(['renan']))
+for user in session.scalars(stmt):
+    print(user)
+
+# Query by connection
+
+connection = engine.connect()
+results = connection.execute(stmt).fetchall()
+
+for result in results:
+    print(result)
+
