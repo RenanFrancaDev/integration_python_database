@@ -1,37 +1,23 @@
-import sqlalchemy
-from sqlalchemy.orm import declarative_base, relationship, Session
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, inspect, select, func
+import datetime
+import pymongo as pyM
 
-Base = declarative_base()
+client = pyM.MongoClient('mongodb+srv://renanfrancadev:password@cluster0.5pjzvgg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
+db = client.pymongo
+collection = db.DIO
 
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    email = Column(String(50), nullable=False)
-    cpf = Column(String(11), nullable=False)
+print(db.list_collections)
 
+post = {
+    "name":"renan",
+    "email":"renan@email.com",
+    "cpf":12345678900,
+    "number":"001",
+    "type":"corrente",
+    "date": datetime.datetime.now(datetime.UTC)
+}
 
-    account = relationship("Account", back_populates='account')
-
-    def __repr__(self):
-        return f"User(id={self.id}, name={self.name}, fullname={self.fullname})"
-
-
-class Account(Base):
-    __tablename__ = 'accounts'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    number = Column(Integer, nullable=False)
-    type = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey("user.id"))
-
-
-    account = relationship("User", back_populates='user')
-
-    def __repr__(self):
-        return f"Account(id={self.id}, number={self.number}, type={self.type})"
-    
-print(User.__tablename__)
-print(User.__repr__)
-print(Account.__tablename__)
+# Infos submit
+posts = db.post
+post_id = posts.insert_one(post).inserted_id
+print(post_id)
